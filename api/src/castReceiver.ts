@@ -1,0 +1,16 @@
+export default function render() {
+  return `<html>
+  <head>
+    <script type="text/javascript"
+        src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js">
+    </script>
+  </head>
+  <body>
+    <cast-media-player></cast-media-player>
+    <script>
+      cast.framework.CastReceiverContext.getInstance().start();
+    </script>
+  </body>
+  </html>
+  `;
+}
