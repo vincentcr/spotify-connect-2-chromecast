@@ -82,14 +82,12 @@ function initAuthRoutes(services: Services) {
 
   router.post("/process-callback", async ctx => {
     const { code } = ctx.request.body;
-    logger.debug("/process-callback", { body: ctx.request.body });
     const authRec = await auth.processSpotifyOauthCallback(code);
 
     ctx.cookies.set("token", authRec.id, {
       expires: dateFns.addYears(new Date(), 100)
     });
     ctx.body = authView(authRec);
-    // logger.debug("SET COOKIE YO", ctx.cookies.secure, ctx.cookies);
   });
 
   router.get("/", authorize, async ctx => {
