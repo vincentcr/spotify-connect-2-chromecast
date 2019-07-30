@@ -1,5 +1,3 @@
-.git-temp
+*.old
 node_modules
 dist
-ext-v0
-
