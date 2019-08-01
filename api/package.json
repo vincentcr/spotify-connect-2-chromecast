@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "NODE_ENV=development nodemon -e js,ts,json -w src -x ts-node src/main | bunyan",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha --recursive test/**/*.test.ts"
   },
   "keywords": [],
   "author": "",
@@ -29,10 +29,13 @@
   },
   "devDependencies": {
     "@types/bunyan": "^1.8.6",
+    "@types/chai": "^4.1.7",
+    "@types/chai-as-promised": "^7.1.0",
     "@types/koa": "^2.0.48",
     "@types/koa-bodyparser": "^4.3.0",
     "@types/koa-router": "^7.0.40",
     "@types/lodash.camelcase": "^4.3.6",
+    "@types/mocha": "^5.2.7",
     "@types/node": "^12.6.6",
     "@types/node-fetch": "^2.3.5",
     "@types/redis": "^2.8.13",
@@ -41,9 +44,12 @@
     "@types/ws": "^6.0.1",
     "@typescript-eslint/eslint-plugin": "^1.10.2",
     "@typescript-eslint/parser": "^1.10.2",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
     "eslint": "^5.16.0",
     "eslint-config-prettier": "^4.3.0",
     "eslint-plugin-prettier": "^3.1.0",
+    "mocha": "^6.2.0",
     "nodemon": "^1.19.1",
     "prettier": "^1.18.2",
     "ts-node": "^8.2.0",

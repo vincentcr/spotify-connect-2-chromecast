@@ -9,55 +9,84 @@ import * as stream from "stream";
  * Note that, as the wait method does not add anything to the event loop, it will not on its own
  * prevent the node runtime from exiting if the event loop empties out.
  */
-class WaitHandle {
-  private idleResolve?: () => void;
-  private idlePromise?: Promise<void>;
+export class WaitHandle {
+  private waitResolve?: () => void;
+  private waitPromise?: Promise<void>;
 
   public constructor() {
     this.resume();
   }
 
-  public resume() {
-    this.idlePromise = new Promise(resolve => {
-      if (this.idleResolve != null) {
-        this.idleResolve();
-      }
-      this.idleResolve = resolve;
+  public resume(): void {
+    if (this.waitResolve != null) {
+      this.waitResolve();
+    }
+
+    this.waitPromise = new Promise(resolve => {
+      this.waitResolve = resolve;
     });
   }
 
-  public async wait() {
-    await setImmediateAsync();
-    return this.idlePromise;
+  public wait(): Promise<void> {
+    return this.waitPromise!;
   }
 }
+
+class QueueResultsIterator<T> implements AsyncIterator<T> {
+  private results: IteratorResult<T>[] = [];
+  private resolvers: ((result: IteratorResult<T>) => void)[] = [];
+
+  public next(): Promise<IteratorResult<T>> {
+    const lastResult = this.results.shift();
+    if (lastResult != null) {
+      return Promise.resolve(lastResult);
+    } else {
+      return new Promise<IteratorResult<T>>(resolve => {
+        this.resolvers.push(resolve);
+      });
+    }
+  }
+
+  public addResult(result: ProcessingQueueResult<T>) {
+    // casting to `any` to workaround a bug in Typescript's IteratorResult definition:
+    // https://github.com/microsoft/TypeScript/issues/2983
+    // https://github.com/microsoft/TypeScript/issues/11375
+    // Will be fixed with TS 3.6
+    const itResult = result.done ? (result as any) : result;
+    const resolve = this.resolvers.shift();
+    if (resolve != null) {
+      resolve(itResult);
+    } else {
+      this.results.push(itResult);
+    }
+  }
+}
+
+type ProcessingQueueResult<R> = { done: false; value: R } | { done: true };
 
 /**
  * ProcessingQueue allows to enqueue work items, and dequeue the processed results.
  *
- * The `dequeue` method will asynchronously yield the processed work items added through the
- * `enqueue` method, and will not return until `complete` is called.
+ * The `getResults` method will return an async iterator that asynchronously yields the processed
+ * work items added through the `enqueue` method, and will not return until `complete` is called.
+ *
  */
-class ProcessingQueue<I, R> {
-  private inQueue: AsyncIterable<R>[] = [];
-  private outQueue: R[] = [];
+export class ProcessingQueue<I, R> {
+  private inQueue: I[] = [];
+  private iterators: QueueResultsIterator<R>[] = [];
+  private results: ProcessingQueueResult<R>[] = [];
+  private process: (item: I) => AsyncIterable<R>;
   private completed = false;
   private waiter = new WaitHandle();
-  private process: (item: I) => AsyncIterable<R>;
 
   public constructor(process: (item: I) => AsyncIterable<R>) {
     this.process = process;
+    this.runProcessingLoop();
   }
 
   public enqueue(item: I) {
-    this.inQueue.push(this.processAsync(item));
+    this.inQueue.push(item);
     this.waiter.resume();
-  }
-
-  private async *processAsync(item: I): AsyncIterable<R> {
-    // ensure processing starts after next tick.
-    await setImmediateAsync();
-    yield* this.process(item);
   }
 
   public complete() {
@@ -65,28 +94,48 @@ class ProcessingQueue<I, R> {
     this.waiter.resume();
   }
 
-  public async *dequeue(): AsyncIterable<R> {
-    yield* this.getProcessedResults();
-    yield* this.getFutureResults();
+  public getResults(): AsyncIterable<R> {
+    const it = new QueueResultsIterator<R>();
+    for (const res of this.results) {
+      it.addResult(res);
+    }
+    this.iterators.push(it);
+    return {
+      [Symbol.asyncIterator]() {
+        return it;
+      }
+    };
   }
 
   public *getProcessedResults(): IterableIterator<R> {
-    yield* this.outQueue;
+    for (const result of this.results) {
+      if (!result.done) {
+        yield result.value;
+      }
+    }
   }
 
-  private async *getFutureResults(): AsyncIterable<R> {
+  private async runProcessingLoop() {
+    await setImmediateAsync();
     while (!this.completed || this.inQueue.length > 0) {
-      const results = this.inQueue.shift();
+      const item = this.inQueue.shift();
 
-      if (results != null) {
-        for await (const result of results) {
-          this.outQueue.push(result);
-          yield result;
+      if (item != null) {
+        for await (const value of this.process(item)) {
+          const result = { done: false, value };
+          this.results.push(result);
+          for (const it of this.iterators) {
+            it.addResult(result);
+          }
         }
       } else if (!this.completed) {
         // wait for more data or completion
         await this.waiter.wait();
       }
+    }
+
+    for (const it of this.iterators) {
+      it.addResult({ done: true });
     }
   }
 }
@@ -124,7 +173,7 @@ export class StreamSource {
   }
 
   public async *consume(): AsyncIterable<Buffer> {
-    yield* this.processingQueue.dequeue();
+    yield* this.processingQueue.getResults();
   }
 
   public async add(buffer: Buffer) {
