@@ -33,17 +33,32 @@ export class WaitHandle {
 }
 
 class QueueResultsIterator<T> implements AsyncIterator<T> {
+  private notifyDone: () => void;
   private results: IteratorResult<T>[] = [];
   private resolvers: ((result: IteratorResult<T>) => void)[] = [];
 
+  public constructor(notifyDone: () => void) {
+    this.notifyDone = notifyDone;
+  }
+
   public next(): Promise<IteratorResult<T>> {
-    const lastResult = this.results.shift();
-    if (lastResult != null) {
-      return Promise.resolve(lastResult);
-    } else {
-      return new Promise<IteratorResult<T>>(resolve => {
+    return new Promise<IteratorResult<T>>(resolve => {
+      const result = this.results.shift();
+      if (result != null) {
+        this.resolve(result, resolve);
+      } else {
         this.resolvers.push(resolve);
-      });
+      }
+    });
+  }
+
+  private resolve(
+    result: IteratorResult<T>,
+    resolve: (result: IteratorResult<T>) => void
+  ) {
+    resolve(result);
+    if (result.done) {
+      this.notifyDone();
     }
   }
 
@@ -55,7 +70,7 @@ class QueueResultsIterator<T> implements AsyncIterator<T> {
     const itResult = result.done ? (result as any) : result;
     const resolve = this.resolvers.shift();
     if (resolve != null) {
-      resolve(itResult);
+      this.resolve(itResult, resolve);
     } else {
       this.results.push(itResult);
     }
@@ -95,7 +110,9 @@ export class ProcessingQueue<I, R> {
   }
 
   public getResults(): AsyncIterable<R> {
-    const it = new QueueResultsIterator<R>();
+    const it = new QueueResultsIterator<R>(() => {
+      this.iterators.splice(this.iterators.indexOf(it), 1);
+    });
     for (const res of this.results) {
       it.addResult(res);
     }
