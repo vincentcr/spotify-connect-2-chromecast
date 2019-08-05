@@ -2,24 +2,19 @@ import { VError } from "verror";
 import { Lame } from "lame-wasm";
 
 export class Mp3SourceProcessor {
-  private static lame?: Lame;
   private readonly lame: Lame;
 
-  public static async create() {
-    const lame = await this.getLame();
-    return new Mp3SourceProcessor(lame);
-  }
-
-  private static async getLame() {
-    if (this.lame == null) {
-      this.lame = await Lame.load({ debug: false });
+  public static async create(lame?: Lame) {
+    if (lame == null) {
+      lame = await Lame.load({});
     }
-    return this.lame;
+    return new Mp3SourceProcessor(lame);
   }
 
   private constructor(lame: Lame) {
     this.lame = lame;
   }
+
   public async *process(buffer: Buffer): AsyncIterable<Buffer> {
     const channels = this.splitToPcmChannels(buffer);
     yield* this.lame.encode(...channels);
@@ -27,6 +22,12 @@ export class Mp3SourceProcessor {
 
   private splitToPcmChannels(buf: Buffer) {
     const numChannels = buf.readInt8(0);
+    if (numChannels !== this.lame.numChannels()) {
+      throw new Error(
+        `Invalid number of channels in input: expected ${this.lame.numChannels()}, received ${numChannels}`
+      );
+    }
+
     const bufOffset = buf.byteOffset;
     const allChannels = buf.buffer.slice(
       buf.byteOffset + 1,
@@ -54,7 +55,9 @@ export class Mp3SourceProcessor {
     }
 
     if (totalChannelSize % numChannels !== 0) {
-      throwDataError("channel data size not a multiple of number of channel");
+      throwDataError(
+        "channel data size not a multiple of the number of channels"
+      );
     }
     const channelSize = totalChannelSize / numChannels;
 
