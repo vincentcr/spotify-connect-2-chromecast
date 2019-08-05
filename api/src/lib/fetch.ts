@@ -17,11 +17,8 @@ export async function fetch(url: string, options: FetchOptions = {}) {
   const body = formatData(data, headers["content-type"]);
 
   const allOptions = { ...otherOptions, headers, body };
-  console.log("making fetch request", url, allOptions);
 
   const resp = await nodeFetch(url, allOptions);
-
-  console.log("got response", resp.status);
 
   if (!resp.ok) {
     throw new VError(
