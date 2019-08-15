@@ -23,6 +23,11 @@ import {
 import { Config } from "../config";
 import { StreamStore } from "../domain/streaming";
 import { VError } from "verror";
+import {
+  ChromecastDeviceManager,
+  ChromecastDevice,
+  ChromeCastMediaDescriptor
+} from "../lib/cast";
 
 const UUID_LEN = 36;
 
@@ -244,4 +249,40 @@ function initStreamingRoutes(services: Services) {
   });
 
   return router;
+}
+
+function initCastingRoutes(): Router<ApiState> {
+  const router = new Router<ApiState>({ prefix: "/cast" });
+  const deviceManager = new ChromecastDeviceManager();
+  deviceManager.start();
+
+  router.get("/devices", async ctx => {
+    const devices = deviceManager.getDevices();
+    ctx.body = devices.map(deviceView);
+  });
+
+  router.post("/devices/:device_fname/play", async ctx => {
+    const deviceName = ctx.params["device_fname"] as string;
+    const media = ctx.request.body as ChromeCastMediaDescriptor;
+    const device = deviceManager.findDevice(deviceName);
+    logger.debug("playing", { deviceName, media });
+    if (device == null) {
+      ctx.status = 404;
+    } else {
+      const result = await device.play(media);
+      logger.debug("device.play", { media, result });
+      ctx.status = 204;
+    }
+  });
+
+  return router;
+}
+
+function deviceView(device: ChromecastDevice) {
+  return {
+    id: device.id,
+    friendlyName: device.friendlyName,
+    manufacturerDescription: device.manufacturerDescription,
+    fullName: device.fullName
+  };
 }

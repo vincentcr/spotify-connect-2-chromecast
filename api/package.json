@@ -13,19 +13,21 @@
   "dependencies": {
     "@koa/cors": "^3.0.0",
     "bunyan": "^1.8.12",
+    "castv2-client": "^1.2.0",
     "date-fns": "^1.30.1",
     "dotenv-expand": "^5.1.0",
     "envalid": "^5.0.0",
     "koa": "^2.7.0",
     "koa-body": "^4.1.1",
     "koa-router": "^7.4.0",
+    "lame-wasm": "1.0.0",
     "lodash.camelcase": "^4.3.0",
+    "mdns": "^2.5.1",
     "node-fetch": "^2.6.0",
     "redis": "^2.8.0",
     "uuid": "^3.3.2",
     "verror": "^1.10.0",
-    "ws": "^7.0.1",
-    "lame-wasm": "1.0.0"
+    "ws": "^7.0.1"
   },
   "devDependencies": {
     "@types/bunyan": "^1.8.6",
@@ -35,6 +37,7 @@
     "@types/koa-bodyparser": "^4.3.0",
     "@types/koa-router": "^7.0.40",
     "@types/lodash.camelcase": "^4.3.6",
+    "@types/mdns": "0.0.33",
     "@types/mocha": "^5.2.7",
     "@types/node": "^12.6.6",
     "@types/node-fetch": "^2.3.5",
