@@ -3,16 +3,16 @@ import { Lame } from "lame-wasm";
 
 export class Mp3SourceProcessor {
   private readonly lame: Lame;
+  private numChannels: number;
 
-  public static async create(lame?: Lame) {
-    if (lame == null) {
-      lame = await Lame.load({});
-    }
+  public static async create(params: { stereo: boolean }) {
+    const lame = await Lame.load(params);
     return new Mp3SourceProcessor(lame);
   }
 
   private constructor(lame: Lame) {
     this.lame = lame;
+    this.numChannels = lame.numChannels();
   }
 
   public async *process(buffer: Buffer): AsyncIterable<Buffer> {
@@ -20,28 +20,24 @@ export class Mp3SourceProcessor {
     yield* this.lame.encode(...channels);
   }
 
+  // buffer contains the data for all channels, concatenated in one buffer,
+  // and preceded by a byte indicating the number of channels
+  // the number of channels must match the lame encoder's settings.
   private splitToPcmChannels(buf: Buffer) {
-    const numChannels = buf.readInt8(0);
-    if (numChannels !== this.lame.numChannels()) {
-      throw new Error(
-        `Invalid number of channels in input: expected ${this.lame.numChannels()}, received ${numChannels}`
-      );
-    }
-
     const bufOffset = buf.byteOffset;
     const allChannels = buf.buffer.slice(
-      buf.byteOffset + 1,
+      buf.byteOffset,
       buf.byteOffset + buf.length
     );
     const totalChannelSize = allChannels.byteLength;
-    const channels: Float32Array[] = new Array(numChannels);
+    const channels: Float32Array[] = new Array(this.numChannels);
 
-    function throwDataError(msg: string) {
+    const throwDataError = (msg: string) => {
       throw new VError(
         {
           name: "InvalidChannelDataError",
           info: {
-            numChannels,
+            numChannels: this.numChannels,
             totalChannelSize,
             totalChannelSizeBytes: allChannels.byteLength,
             bufferSize: buf.length,
@@ -52,20 +48,20 @@ export class Mp3SourceProcessor {
         },
         msg
       );
-    }
+    };
 
-    if (totalChannelSize % numChannels !== 0) {
+    if (totalChannelSize % this.numChannels !== 0) {
       throwDataError(
         "channel data size not a multiple of the number of channels"
       );
     }
-    const channelSize = totalChannelSize / numChannels;
+    const channelSize = totalChannelSize / this.numChannels;
 
     if (channelSize % 4 !== 0) {
       throwDataError("channel data size not a multiple of 4");
     }
 
-    for (let i = 0; i < numChannels; i++) {
+    for (let i = 0; i < this.numChannels; i++) {
       const slice = allChannels.slice(i * channelSize, (i + 1) * channelSize);
       const chan = new Float32Array(slice);
       if (!chan.every(f => f >= -1 && f <= 1)) {
