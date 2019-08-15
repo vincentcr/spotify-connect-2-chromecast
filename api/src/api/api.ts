@@ -1,10 +1,11 @@
 import * as http from "http";
+import * as fs from "fs";
 
 import * as Koa from "koa";
 import * as WebSocket from "ws";
 import * as Router from "koa-router";
 import * as cors from "@koa/cors";
-import * as bodyParser from "koa-bodyparser";
+import * as bodyParser from "koa-body";
 import * as dateFns from "date-fns";
 
 import { getLogger } from "../lib/logger";
@@ -41,7 +42,7 @@ export async function initApi(services: Services) {
   const app = new Koa();
 
   app.use(cors({ credentials: true }));
-  app.use(bodyParser());
+  app.use(bodyParser({ multipart: true }));
   app.use(logRequest);
   app.use(catchError);
   app.use(notFound);
@@ -61,7 +62,11 @@ export function initRoutes(services: Services): Router {
     ctx.body = { version: "1.0.0" };
   });
 
-  for (const setup of [initAuthRoutes, initStreamingRoutes]) {
+  for (const setup of [
+    initAuthRoutes,
+    initStreamingRoutes,
+    initCastingRoutes
+  ]) {
     const subRouter = setup(services);
     router.use(subRouter.routes()).use(subRouter.allowedMethods());
   }
@@ -194,6 +199,23 @@ function initStreamingRoutes(services: Services) {
       metadata: string;
     };
     const src = await StreamStore.create({ contentType });
+    ctx.body = { id: src.id, contentType };
+  });
+
+  router.post("/upload", async ctx => {
+    if (ctx.request.files == null || ctx.request.files.file == null) {
+      ctx.status = 400;
+      return;
+    }
+
+    const file = ctx.request.files.file;
+    const contentType = ctx.request.body.contentType || file.type;
+
+    const src = await StreamStore.create({ contentType });
+    const outStream = src.getWritableStream();
+    const inStream = fs.createReadStream(file.path);
+    inStream.pipe(outStream);
+
     ctx.body = { id: src.id, contentType };
   });
 

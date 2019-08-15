@@ -189,6 +189,32 @@ export class StreamSource {
     return stream.Readable.from(this.consume());
   }
 
+  public getWritableStream() {
+    const src = this;
+    const st = new stream.Writable({
+      write(
+        chunk: any,
+        _encoding: string,
+        callback: (error?: Error | null) => void
+      ) {
+        if (!(chunk instanceof Buffer)) {
+          throw new Error(
+            "write: only buffers are valid input for this stream"
+          );
+        }
+        src.add(chunk);
+        callback();
+      },
+
+      final(callback: (error?: Error | null) => void) {
+        src.complete();
+        callback();
+      }
+    });
+
+    return st;
+  }
+
   public async *consume(): AsyncIterable<Buffer> {
     yield* this.processingQueue.getResults();
   }

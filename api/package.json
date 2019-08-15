@@ -17,7 +17,7 @@
     "dotenv-expand": "^5.1.0",
     "envalid": "^5.0.0",
     "koa": "^2.7.0",
-    "koa-bodyparser": "^4.2.1",
+    "koa-body": "^4.1.1",
     "koa-router": "^7.4.0",
     "lodash.camelcase": "^4.3.0",
     "node-fetch": "^2.6.0",
