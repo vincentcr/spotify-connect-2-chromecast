@@ -20,9 +20,8 @@ export class Mp3SourceProcessor {
     yield* this.lame.encode(...channels);
   }
 
-  // buffer contains the data for all channels, concatenated in one buffer,
-  // and preceded by a byte indicating the number of channels
-  // the number of channels must match the lame encoder's settings.
+  // Buffer contains the data for all channels, concatenated in one buffer.
+  // The number of channels must match the lame encoder's settings.
   private splitToPcmChannels(buf: Buffer) {
     const bufOffset = buf.byteOffset;
     const allChannels = buf.buffer.slice(
@@ -63,13 +62,7 @@ export class Mp3SourceProcessor {
 
     for (let i = 0; i < this.numChannels; i++) {
       const slice = allChannels.slice(i * channelSize, (i + 1) * channelSize);
-      const chan = new Float32Array(slice);
-      if (!chan.every(f => f >= -1 && f <= 1)) {
-        throwDataError(
-          `not every element of channel ${i} is in the range [-1,1]`
-        );
-      }
-      channels[i] = chan;
+      channels[i] = new Float32Array(slice);
     }
 
     return channels;

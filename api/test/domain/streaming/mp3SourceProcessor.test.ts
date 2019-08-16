@@ -93,32 +93,11 @@ describe("The Mp3SourceProcessor class", () => {
           consumeAsyncIterable(processor.process(Buffer.concat([left, right])))
         ).to.be.rejectedWith("channel data size not a multiple of 4");
       });
-
-      it("When channel values are not within [-1,1]", async () => {
-        const processor = await Mp3SourceProcessor.create({ stereo: true });
-        const left = bufferFromFloats(1.0, 0, 0.5);
-        const right = bufferFromFloats(1.0, 1.1, 1);
-
-        expect(
-          consumeAsyncIterable(processor.process(Buffer.concat([left, right])))
-        ).to.be.rejectedWith(
-          "not every element of channel 1 is in the range [-1,1]"
-        );
-      });
     });
   });
 });
 
 ///////////////////////// helpers /////////////////////////
-
-function bufferFromFloats(...floats: number[]) {
-  const buf = Buffer.alloc(floats.length * 4);
-  floats.forEach((f, i) => {
-    buf.writeFloatLE(f, i * 4);
-  });
-
-  return buf;
-}
 
 function loadFixtures(...fnames: string[]) {
   return Promise.all(
