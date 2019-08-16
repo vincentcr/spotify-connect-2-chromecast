@@ -15,7 +15,7 @@ export class StreamStore {
         `only mp3 streams are supported for now (got "${contentType}")`
       );
     }
-    const processor = await Mp3SourceProcessor.create();
+    const processor = await Mp3SourceProcessor.create({ stereo: true });
     const id = uuid();
     const src = new StreamSource({
       id,
