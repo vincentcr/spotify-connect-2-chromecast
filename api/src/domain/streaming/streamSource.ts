@@ -164,6 +164,8 @@ function setImmediateAsync() {
   return new Promise(setImmediate);
 }
 
+type NodeCallback1<T> = (error?: Error | T) => void;
+
 /**
  * StreamSource accumulates buffers of data in memory, and allows to consume the processed results,
  * either through an async iterator or a stream.
@@ -191,28 +193,21 @@ export class StreamSource {
 
   public getWritableStream() {
     const src = this;
-    const st = new stream.Writable({
-      write(
-        chunk: any,
-        _encoding: string,
-        callback: (error?: Error | null) => void
-      ) {
+    return new stream.Writable({
+      write(chunk: any, _encoding: string, callback: NodeCallback1<null>) {
         if (!(chunk instanceof Buffer)) {
-          throw new Error(
-            "write: only buffers are valid input for this stream"
-          );
+          callback(new Error("Only buffers are valid input"));
+        } else {
+          src.add(chunk);
+          callback();
         }
-        src.add(chunk);
-        callback();
       },
 
-      final(callback: (error?: Error | null) => void) {
+      final(callback: NodeCallback1<null>) {
         src.complete();
         callback();
       }
     });
-
-    return st;
   }
 
   public async *consume(): AsyncIterable<Buffer> {
