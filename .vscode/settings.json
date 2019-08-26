@@ -1,0 +1,24 @@
+{
+  "eslint.workingDirectories": [
+    {
+      "directory": "./api",
+      "changeProcessCWD": true
+    },
+    {
+      "directory": "./web",
+      "changeProcessCWD": true
+    },
+    {
+      "directory": "./ext",
+      "changeProcessCWD": true
+    },
+    {
+      "directory": "./tmp/t3",
+      "changeProcessCWD": true
+    },
+    {
+      "directory": "./tmp/t4",
+      "changeProcessCWD": true
+    }
+  ]
+}

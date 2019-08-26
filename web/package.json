@@ -9,12 +9,12 @@
     "@types/react-dom": "16.8.4",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
-    "react-scripts": "3.0.1",
+    "react-scripts": "3.1.1",
     "uuid": "^3.3.2",
     "ws": "^7.0.1"
   },
   "scripts": {
-    "dev": "react-scripts start",
+    "dev": "EXTEND_ESLINT=true react-scripts start",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
@@ -38,13 +38,58 @@
     "@types/spotify-web-playback-sdk": "^0.1.6",
     "@types/uuid": "^3.4.4",
     "@types/ws": "^6.0.1",
-    "@typescript-eslint/eslint-plugin": "^1.10.2",
-    "@typescript-eslint/parser": "^1.10.2",
-    "eslint": "^5.16.0",
-    "eslint-config-prettier": "^4.3.0",
+    "@typescript-eslint/eslint-plugin": "^1.13.0",
+    "@typescript-eslint/parser": "^1.13.0",
+    "eslint": "^6.2.1",
+    "eslint-config-prettier": "^6.1.0",
     "eslint-plugin-prettier": "^3.1.0",
-    "eslint-plugin-react": "^7.13.0",
+    "eslint-plugin-react": "^7.14.3",
     "prettier": "^1.18.2",
-    "typescript": "^3.5.1"
+    "typescript": "^3.5.3"
+  },
+  "eslintConfig": {
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+      "@typescript-eslint"
+    ],
+    "extends": [
+      "react-app",
+      "plugin:react/recommended",
+      "plugin:@typescript-eslint/recommended",
+      "prettier/@typescript-eslint",
+      "plugin:prettier/recommended"
+    ],
+    "rules": {
+      "eqeqeq": [
+        "error",
+        "always",
+        {
+          "null": "never"
+        }
+      ],
+      "no-undef": "off",
+      "@typescript-eslint/explicit-function-return-type": 0,
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "vars": "all",
+          "args": "after-used",
+          "ignoreRestSiblings": true
+        }
+      ],
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-use-before-define": [
+        "error",
+        "nofunc"
+      ],
+      "@typescript-eslint/no-object-literal-type-assertion": "off",
+      "@typescript-eslint/camelcase": [
+        "error",
+        {
+          "properties": "never"
+        }
+      ],
+      "@typescript-eslint/no-non-null-assertion": "off"
+    }
   }
 }
