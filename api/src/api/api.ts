@@ -199,11 +199,11 @@ function initStreamingRoutes(services: Services) {
   }
 
   router.post("/", authorize, async ctx => {
-    const { contentType } = ctx.request.body as {
+    const { contentType, stereo } = ctx.request.body as {
+      stereo: boolean;
       contentType: string;
-      metadata: string;
     };
-    const src = await StreamStore.create({ contentType });
+    const src = await StreamStore.create({ stereo, contentType });
     ctx.body = { id: src.id, contentType };
   });
 
@@ -215,8 +215,9 @@ function initStreamingRoutes(services: Services) {
 
     const file = ctx.request.files.file;
     const contentType = ctx.request.body.contentType || file.type;
+    const stereo = ctx.request.body.stereo || true;
 
-    const src = await StreamStore.create({ contentType });
+    const src = await StreamStore.create({ stereo, contentType });
     const outStream = src.getWritableStream();
     const inStream = fs.createReadStream(file.path);
     inStream.pipe(outStream);
