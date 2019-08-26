@@ -60,9 +60,12 @@ async function processSuccessCode(params: {
 }) {
   const { code, setAppState } = params;
   // if this call is successful, an authentication cookie will be set in the response.
-  await apiFetch("/auth/process-callback", {
+  const resp = await apiFetch("/auth/process-callback", {
     method: "POST",
     data: { code }
   });
+  const auth = await resp.json();
+  const { accessToken } = auth.token;
+  localStorage.setItem("accessToken", accessToken);
   setAppState(AppState.player);
 }

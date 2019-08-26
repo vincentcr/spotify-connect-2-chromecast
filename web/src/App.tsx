@@ -4,6 +4,7 @@ import AuthCallback from "./components/AuthCallback";
 import Player from "./components/Player";
 import ErrorMessage from "./components/ErrorMessage";
 import { AppState, AppStateContext } from "./AppState";
+import { ChromeExtensionCommLink } from "./components/ChromeExtensionCommLink";
 
 const App = () => {
   const stateName = (window.location.hash.substr(1) ||
@@ -24,6 +25,7 @@ const App = () => {
     <div>
       <h2>Spotify Player</h2>
       <AppStateContext.Provider value={{ state, setState }}>
+        <ChromeExtensionCommLink />
         <MainComponent />
       </AppStateContext.Provider>
     </div>
