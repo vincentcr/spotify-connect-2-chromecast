@@ -13,6 +13,9 @@ export type Config = Readonly<{
   SPOTIFY_CLIENT_SECRET: string;
   SPOTIFY_CLIENT_ID: string;
   SPOTIFY_AUTH_REDIRECT_URL: string;
+  STREAM_STORE_CACHE_MAX_SIZE: number;
+  STREAM_STORE_CACHE_CLEANUP_INTERVAL_MS: number;
+  STREAM_STORE_CACHE_STALE_THREHSOLD_MS: number;
 
   isDev: boolean;
   isProd: boolean;
@@ -35,6 +38,11 @@ function readConfig(): Config {
     SPOTIFY_CLIENT_ID: envalid.str(),
     SPOTIFY_AUTH_REDIRECT_URL: envalid.url({
       default: "http://localhost:3000/#authCallback"
+    }),
+    STREAM_STORE_CACHE_MAX_SIZE: envalid.num({ default: 16 }),
+    STREAM_STORE_CACHE_CLEANUP_INTERVAL_MS: envalid.num({ default: 10 * 1000 }),
+    STREAM_STORE_CACHE_STALE_THREHSOLD_MS: envalid.num({
+      default: 60 * 60 * 1000
     })
   };
 

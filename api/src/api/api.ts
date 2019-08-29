@@ -34,9 +34,10 @@ const UUID_LEN = 36;
 const logger = getLogger("api");
 
 interface Services {
+  server: http.Server;
   auth: Auth;
   config: Config;
-  server: http.Server;
+  streams: StreamStore;
 }
 
 interface ApiState {
@@ -128,6 +129,7 @@ function tokenView(rec: AuthRecord) {
 }
 
 function initStreamingRoutes(services: Services) {
+  const { streams } = services;
   const router = new Router<ApiState>({ prefix: "/stream" });
 
   // create a websocket server to allow streamed uploads.
@@ -186,7 +188,7 @@ function initStreamingRoutes(services: Services) {
     // bytes [36 ... n]: pcm data. if empty, it means the stream has ended.
     const streamId = msg.slice(0, UUID_LEN).toString("utf-8");
     const data = msg.slice(UUID_LEN);
-    const src = StreamStore.get(streamId);
+    const src = streams.get(streamId);
     if (src == null) {
       throw new Error("Stream source not found: " + streamId);
     }
@@ -203,7 +205,7 @@ function initStreamingRoutes(services: Services) {
       stereo: boolean;
       contentType: string;
     };
-    const src = await StreamStore.create({ stereo, contentType });
+    const src = await streams.create({ stereo, contentType });
     ctx.body = { id: src.id, contentType };
   });
 
@@ -217,7 +219,7 @@ function initStreamingRoutes(services: Services) {
     const contentType = ctx.request.body.contentType || file.type;
     const stereo = ctx.request.body.stereo || true;
 
-    const src = await StreamStore.create({ stereo, contentType });
+    const src = await streams.create({ stereo, contentType });
     const outStream = src.getWritableStream();
     const inStream = fs.createReadStream(file.path);
     inStream.pipe(outStream);
@@ -227,7 +229,7 @@ function initStreamingRoutes(services: Services) {
 
   router.get("/:stream_id/stats", async ctx => {
     const streamId = ctx.params["stream_id"] as string;
-    const src = StreamStore.get(streamId);
+    const src = streams.get(streamId);
     if (src == null) {
       throw new NotFoundError("Stream Not Found");
     }
@@ -239,7 +241,7 @@ function initStreamingRoutes(services: Services) {
 
   router.get("/:stream_id", async ctx => {
     const streamId = ctx.params["stream_id"] as string;
-    const src = StreamStore.get(streamId);
+    const src = streams.get(streamId);
     if (src == null) {
       throw new NotFoundError("Stream Not Found");
     }
