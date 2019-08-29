@@ -33,12 +33,12 @@ export class WaitHandle {
 }
 
 class QueueResultsIterator<T> implements AsyncIterator<T> {
-  private notifyDone: () => void;
-  private results: IteratorResult<T>[] = [];
-  private resolvers: ((result: IteratorResult<T>) => void)[] = [];
+  private readonly onceDoneHandlers: (() => void)[] = [];
+  private readonly results: IteratorResult<T>[] = [];
+  private readonly resolvers: ((result: IteratorResult<T>) => void)[] = [];
 
-  public constructor(notifyDone: () => void) {
-    this.notifyDone = notifyDone;
+  public once(e: "done", handler: () => void) {
+    this.onceDoneHandlers.push(handler);
   }
 
   public next(): Promise<IteratorResult<T>> {
@@ -58,7 +58,7 @@ class QueueResultsIterator<T> implements AsyncIterator<T> {
   ) {
     resolve(result);
     if (result.done) {
-      this.notifyDone();
+      this.onceDoneHandlers.forEach(handler => handler());
     }
   }
 
@@ -110,12 +110,17 @@ export class ProcessingQueue<I, R> {
   }
 
   public getResults(): AsyncIterable<R> {
-    const it = new QueueResultsIterator<R>(() => {
+    const it = new QueueResultsIterator<R>();
+
+    it.once("done", () => {
+      // to allow freeing consumed iterators, remove reference when done
       this.iterators.splice(this.iterators.indexOf(it), 1);
     });
+
     for (const res of this.results) {
       it.addResult(res);
     }
+
     this.iterators.push(it);
     return {
       [Symbol.asyncIterator]() {
