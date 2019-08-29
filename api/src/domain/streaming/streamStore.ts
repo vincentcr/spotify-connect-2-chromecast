@@ -88,11 +88,11 @@ export class StreamStore {
   public cleanupCache() {
     const entries = Object.entries(this.cache).sort(
       ([, aSource], [, bSource]) => {
-        const aLastActive = aSource.getLastActive();
-        const bLastActive = bSource.getLastActive();
-        if (aLastActive > bLastActive) {
+        const aLastAccessed = aSource.lastAccessed();
+        const bLastAccessed = bSource.lastAccessed();
+        if (aLastAccessed > bLastAccessed) {
           return -1;
-        } else if (aLastActive < bLastActive) {
+        } else if (aLastAccessed < bLastAccessed) {
           return 1;
         } else {
           return 0;
@@ -105,17 +105,14 @@ export class StreamStore {
 
     for (let idx = 0; idx < entries.length; idx++) {
       const [id, source] = entries[idx];
-      const activeDelta = now - source.getLastActive();
-      if (
-        idx >= this.cacheMaxSize ||
-        activeDelta > this.cacheStaleThresholdMs
-      ) {
+      const inactive = now - source.lastAccessed();
+      if (idx >= this.cacheMaxSize || inactive > this.cacheStaleThresholdMs) {
         logger.debug(
           {
             idx,
             id,
             now,
-            activeDelta,
+            inactive,
             thresh: this.cacheStaleThresholdMs
           },
           "deleting StreamSource"

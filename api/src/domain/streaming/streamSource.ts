@@ -178,7 +178,7 @@ type NodeCallback1<T> = (error?: Error | T) => void;
  */
 export class StreamSource {
   private readonly processingQueue: ProcessingQueue<Buffer, Buffer>;
-  private lastActive: number;
+  private _lastAccessed: number;
   private completed: boolean;
 
   public readonly id: string;
@@ -190,7 +190,7 @@ export class StreamSource {
     const { id, processor } = params;
     this.id = id;
     this.processingQueue = new ProcessingQueue(processor);
-    this.lastActive = Date.now();
+    this._lastAccessed = Date.now();
     this.completed = false;
   }
 
@@ -219,24 +219,24 @@ export class StreamSource {
 
   public async *consume(): AsyncIterable<Buffer> {
     for await (const chunk of this.processingQueue.getResults()) {
-      this.lastActive = Date.now();
+      this._lastAccessed = Date.now();
       yield chunk;
     }
   }
 
   public async add(buffer: Buffer) {
     this.processingQueue.enqueue(buffer);
-    this.lastActive = Date.now();
+    this._lastAccessed = Date.now();
   }
 
   public complete() {
     this.processingQueue.complete();
     this.completed = true;
-    this.lastActive = Date.now();
+    this._lastAccessed = Date.now();
   }
 
-  public getLastActive() {
-    return this.lastActive;
+  public lastAccessed() {
+    return this._lastAccessed;
   }
 
   public stats() {
@@ -246,7 +246,7 @@ export class StreamSource {
 
     return {
       buffers: processedBuffers.length,
-      lastActivity: this.lastActive,
+      lastAccessed: this._lastAccessed,
       completed: this.completed,
       totalByteCount: processedBuffers.reduce((tot, b) => tot + b.byteLength, 0)
     };
