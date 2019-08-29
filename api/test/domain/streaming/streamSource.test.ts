@@ -190,7 +190,6 @@ describe("The StreamSource class", () => {
 
       const src = new StreamSource({
         id: "1",
-        contentType: "foo/bar",
         processor
       });
 
@@ -214,7 +213,6 @@ describe("The StreamSource class", () => {
 
       const src = new StreamSource({
         id: "1",
-        contentType: "foo/bar",
         processor
       });
 
@@ -250,7 +248,6 @@ describe("The StreamSource class", () => {
 
       const src = new StreamSource({
         id: "1",
-        contentType: "foo/bar",
         processor
       });
 
@@ -270,7 +267,6 @@ describe("The StreamSource class", () => {
 
       const src = new StreamSource({
         id: "1",
-        contentType: "foo/bar",
         processor
       });
 
@@ -292,7 +288,6 @@ describe("The StreamSource class", () => {
 
       const src = new StreamSource({
         id: "1",
-        contentType: "foo/bar",
         processor
       });
 
@@ -316,7 +311,6 @@ describe("The StreamSource class", () => {
 
       const src = new StreamSource({
         id: "1",
-        contentType: "foo/bar",
         processor
       });
 

@@ -5,8 +5,6 @@ import { Mp3SourceProcessor } from "./mp3SourceProcessor";
 import { getLogger } from "../../lib/logger";
 import { Config } from "../../config";
 
-const SUPPORTED_CONTENT_TYPES = ["audio/pcm"];
-
 const logger = getLogger("streamStore");
 
 type CreateProcessor = (params: {
@@ -53,15 +51,11 @@ export class StreamStore {
     return (buffer: Buffer) => processor.process(buffer);
   }
 
-  public async create(params: { stereo: boolean; contentType: string }) {
-    const { stereo, contentType } = params;
-    if (SUPPORTED_CONTENT_TYPES.indexOf(contentType) < 0) {
-      throw new Error(`Unsupported content-type: "${contentType}"`);
-    }
+  public async create(params: { stereo: boolean }) {
+    const { stereo } = params;
     const id = uuid();
     const src = new StreamSource({
       id,
-      contentType,
       processor: await this.createProcessor({ stereo })
     });
     this.add(src);

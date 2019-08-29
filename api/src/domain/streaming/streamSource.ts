@@ -182,16 +182,13 @@ export class StreamSource {
   private completed: boolean;
 
   public readonly id: string;
-  public readonly contentType: string;
 
   public constructor(params: {
     id: string;
-    contentType: string;
     processor: (buffer: Buffer) => AsyncIterable<Buffer>;
   }) {
-    const { id, contentType, processor } = params;
+    const { id, processor } = params;
     this.id = id;
-    this.contentType = contentType;
     this.processingQueue = new ProcessingQueue(processor);
     this.lastActive = Date.now();
     this.completed = false;
@@ -248,7 +245,6 @@ export class StreamSource {
     );
 
     return {
-      contentType: this.contentType,
       buffers: processedBuffers.length,
       lastActivity: this.lastActive,
       completed: this.completed,

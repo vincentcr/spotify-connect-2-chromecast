@@ -27,7 +27,7 @@ describe("The StreamStore class", () => {
     let now = Date.now();
     await freezeAndYield(now);
 
-    const s1 = await store.create({ stereo: true, contentType: "audio/pcm" });
+    const s1 = await store.create({ stereo: true });
     verifyStoreState(store, [s1.id]);
     await freezeAndYield(now + 6);
     verifyStoreState(store, []);
@@ -44,7 +44,7 @@ describe("The StreamStore class", () => {
       });
 
       await freezeAndYield(now);
-      const s1 = await store.create({ stereo: true, contentType: "audio/pcm" });
+      const s1 = await store.create({ stereo: true });
       store.cleanupCache();
       verifyStoreState(store, [s1.id]);
 
@@ -55,7 +55,7 @@ describe("The StreamStore class", () => {
 
       now += 2;
       await freezeAndYield(now);
-      const s2 = await store.create({ stereo: true, contentType: "audio/pcm" });
+      const s2 = await store.create({ stereo: true });
       store.cleanupCache();
       verifyStoreState(store, [s1.id, s2.id]);
 
@@ -80,8 +80,8 @@ describe("The StreamStore class", () => {
       });
 
       await freezeAndYield(now);
-      const s1 = await store.create({ stereo: true, contentType: "audio/pcm" });
-      const s2 = await store.create({ stereo: true, contentType: "audio/pcm" });
+      const s1 = await store.create({ stereo: true });
+      const s2 = await store.create({ stereo: true });
       store.cleanupCache();
       verifyStoreState(store, [s1.id, s2.id]);
 
@@ -126,18 +126,18 @@ describe("The StreamStore class", () => {
         STREAM_STORE_CACHE_STALE_THREHSOLD_MS: 60 * 60 * 1000
       });
 
-      const s1 = await store.create({ stereo: true, contentType: "audio/pcm" });
+      const s1 = await store.create({ stereo: true });
       await setTimeoutAsync(1); // make sure the timestamp for the next source is different
 
-      const s2 = await store.create({ stereo: true, contentType: "audio/pcm" });
+      const s2 = await store.create({ stereo: true });
       await setTimeoutAsync(1);
 
-      const s3 = await store.create({ stereo: true, contentType: "audio/pcm" });
+      const s3 = await store.create({ stereo: true });
       await setTimeoutAsync(1);
 
       verifyStoreState(store, [s1.id, s2.id, s3.id]);
 
-      const s4 = await store.create({ stereo: true, contentType: "audio/pcm" });
+      const s4 = await store.create({ stereo: true });
       await setTimeoutAsync(1);
 
       // s1 was evicted as max size reached
@@ -147,7 +147,7 @@ describe("The StreamStore class", () => {
       s2.add(Buffer.alloc(0));
       await setTimeoutAsync(1);
 
-      const s5 = await store.create({ stereo: true, contentType: "audio/pcm" });
+      const s5 = await store.create({ stereo: true });
       await setTimeoutAsync(1);
 
       // s3 was evicted as was least recently used

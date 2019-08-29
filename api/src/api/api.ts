@@ -205,7 +205,11 @@ function initStreamingRoutes(services: Services) {
       stereo: boolean;
       contentType: string;
     };
-    const src = await streams.create({ stereo, contentType });
+    if (contentType !== "audio/pcm") {
+      throw new Error(`Unsupported content-type: "${contentType}"`);
+    }
+
+    const src = await streams.create({ stereo });
     ctx.body = { id: src.id, contentType };
   });
 
@@ -216,15 +220,14 @@ function initStreamingRoutes(services: Services) {
     }
 
     const file = ctx.request.files.file;
-    const contentType = ctx.request.body.contentType || file.type;
     const stereo = ctx.request.body.stereo || true;
 
-    const src = await streams.create({ stereo, contentType });
+    const src = await streams.create({ stereo });
     const outStream = src.getWritableStream();
     const inStream = fs.createReadStream(file.path);
     inStream.pipe(outStream);
 
-    ctx.body = { id: src.id, contentType };
+    ctx.body = { id: src.id };
   });
 
   router.get("/:stream_id/stats", async ctx => {
@@ -247,7 +250,7 @@ function initStreamingRoutes(services: Services) {
     }
 
     const st = src.getReadableStream();
-    ctx.response.type = src.contentType;
+    ctx.response.type = "audio/mpeg";
     ctx.body = st;
   });
 
