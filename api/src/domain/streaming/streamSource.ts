@@ -144,11 +144,7 @@ export class ProcessingQueue<I, R> {
 
       if (item != null) {
         for await (const value of this.process(item)) {
-          const result = { done: false, value };
-          this.results.push(result);
-          for (const it of this.iterators) {
-            it.addResult(result);
-          }
+          this.addProcessedResult({ done: false, value });
         }
       } else if (!this.completed) {
         // wait for more data or completion
@@ -156,8 +152,13 @@ export class ProcessingQueue<I, R> {
       }
     }
 
+    this.addProcessedResult({ done: true });
+  }
+
+  private addProcessedResult(result: ProcessingQueueResult<R>) {
+    this.results.push(result);
     for (const it of this.iterators) {
-      it.addResult({ done: true });
+      it.addResult(result);
     }
   }
 }

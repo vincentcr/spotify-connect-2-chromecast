@@ -132,8 +132,8 @@ describe("The ProcessingQueue class", () => {
     });
   });
 
-  describe("The complete method", () => {
-    it("should make the getResults iterators complete", async () => {
+  describe("The complete method should make the getResults iterators terminate", () => {
+    it("When consume called after complete", async () => {
       async function* process(n: number) {
         yield n;
         yield n * 2;
@@ -143,6 +143,7 @@ describe("The ProcessingQueue class", () => {
       q.enqueue(1);
       q.enqueue(3);
       q.complete();
+      await setTimeoutAsync(0);
       expect(await consumeAsyncIterable(q.getResults())).to.deep.equal([
         1,
         2,
@@ -151,7 +152,7 @@ describe("The ProcessingQueue class", () => {
       ]);
     });
 
-    it("should make the getResults iterators complete even if it is called after iteration has begun", async () => {
+    it("When consume called before complete", async () => {
       async function* process(n: number) {
         yield n;
         yield n * 2;
@@ -166,7 +167,7 @@ describe("The ProcessingQueue class", () => {
       expect(results).to.deep.equal([1, 2, 3, 6]);
     });
 
-    it("should make the dequeue iterator complete even if empty", async () => {
+    it("When there are no results", async () => {
       async function* process(n: number) {
         yield n;
         yield n * 2;
@@ -364,8 +365,8 @@ async function consumeAsyncIterable<T>(
 }
 
 /**
- * waits at least minTimeoutMs for a promise to resolved. If it hasn't, it is deemed
- * "suspended" and the expectation succeeds.
+ * waits at least minTimeoutMs for a promise to resolve. If it hasn't, it is deemed
+ * "suspended" and the assertion succeeds.
  */
 async function expectPromiseSuspended(promise: Promise<any>, minTimeoutMs = 3) {
   const started = Date.now();
