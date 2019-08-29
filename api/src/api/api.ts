@@ -157,19 +157,14 @@ function initStreamingRoutes(services: Services) {
     }
   });
 
-  ws.on("connection", (conn, req) => {
-    const auth: AuthRecord = (req as any).state.auth;
+  ws.on("connection", conn => {
     conn.on("message", msg => {
-      processMessage(conn, auth, msg);
+      processMessage(conn, msg);
     });
   });
 
-  function processMessage(
-    conn: WebSocket,
-    authRec: AuthRecord,
-    msg: WebSocket.Data
-  ) {
-    processMessageAsync(authRec, msg).catch(err => {
+  function processMessage(conn: WebSocket, msg: WebSocket.Data) {
+    processMessageAsync(msg).catch(err => {
       logger.error(err, VError.info(err), "Failed to process data message");
       conn.send(
         JSON.stringify({
@@ -179,7 +174,7 @@ function initStreamingRoutes(services: Services) {
     });
   }
 
-  async function processMessageAsync(authRec: AuthRecord, msg: WebSocket.Data) {
+  async function processMessageAsync(msg: WebSocket.Data) {
     if (!(msg instanceof Buffer)) {
       throw new Error("expected buffer got " + msg.constructor.name);
     }
