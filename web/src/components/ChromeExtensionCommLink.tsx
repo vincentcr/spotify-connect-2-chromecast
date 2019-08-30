@@ -11,15 +11,8 @@ export function ChromeExtensionCommLink() {
   const { state, setState } = useContext(AppStateContext);
 
   useEffect(() => {
-    console.log("ChromeExtensionCommLink", {
-      isChrome: typeof chrome !== "undefined",
-      hasChromeExtensionAffinity:
-        typeof chrome !== "undefined" && chrome.runtime != null,
-      state,
-      accessToken: localStorage.getItem("accessToken")
-    });
     if (typeof chrome === "undefined" || chrome.runtime == null) {
-      // the chrome extension is not installed
+      // not chrome, or the chrome extension is not installed
       return;
     }
 
