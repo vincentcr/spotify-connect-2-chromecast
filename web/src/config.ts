@@ -3,7 +3,7 @@ export interface Config {
   WS_URL: string;
   SPOTIFY_CLIENT_ID: string;
   SPOTIFY_AUTH_REDIRECT_URL: string;
-  EXTENSION_ID: string;
+  CHROME_EXTENSION_ID: string;
 }
 
 export const config: Config = {
@@ -11,5 +11,5 @@ export const config: Config = {
   WS_URL: "ws://localhost:3001/api/stream/ws",
   SPOTIFY_CLIENT_ID: "3a9d438d5c3145b4bacca565985da0d2",
   SPOTIFY_AUTH_REDIRECT_URL: "http://localhost:3000/#authCallback",
-  EXTENSION_ID: "cnacmfaijadbkeoommccobapimcngmcl"
+  CHROME_EXTENSION_ID: "cnacmfaijadbkeoommccobapimcngmcl"
 };

@@ -1,14 +1,14 @@
 {
-  "name": "chrome-extension-react-typescript-boilerplate",
+  "name": "chrome-extension-spotify-connect-2-chromecast",
   "version": "1.0.0",
-  "description": "A boilerplate project to quickly build a Chrome extension using TypeScript and React (built using webpack).",
+  "description": "Chrome Extension bridging Spotify Connect with Chromecast (through tab media capture)",
   "scripts": {
     "build": "webpack --config webpack.prod.js",
-    "dev": "webpack --config webpack.dev.js",
+    "dev": "nodemon -e js,ts,tsx,json,css,scss -w src -x 'webpack --config webpack.dev.js'",
     "watch": "webpack -w --config webpack.dev.js",
     "lint": "tslint 'src/**/*.{ts, tsx}'"
   },
-  "author": "Joe Martella",
+  "author": "Vincent Cote-Roy",
   "license": "MIT",
   "devDependencies": {
     "@types/chrome": "0.0.86",
@@ -22,6 +22,7 @@
     "eslint-plugin-prettier": "^3.1.0",
     "eslint-plugin-react": "^7.13.0",
     "node-sass": "^4.12.0",
+    "nodemon": "^1.19.1",
     "prettier": "^1.18.2",
     "sass-loader": "^7.1.0",
     "ts-loader": "^6.0.2",

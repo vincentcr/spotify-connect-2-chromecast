@@ -1,0 +1,29 @@
+{
+  "manifest_version": 2,
+
+  "name": "Spotify Connect to Chromecast",
+  "description": "Chrome Extension bridging Spotify Connect with Chromecast",
+  "version": "1.0.0",
+
+  "browser_action": {
+    "default_icon": "icon16.png",
+    "default_popup": "popup.html"
+  },
+
+  "background": {
+    "scripts": ["js/background.js"],
+    "persistent": false
+  },
+
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+
+  "externally_connectable": {
+    "matches": ["http://localhost:3000/*"]
+  },
+
+  "permissions": ["storage", "tabCapture", "declarativeContent", "activeTab"]
+}

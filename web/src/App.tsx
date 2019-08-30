@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Authenticate from "./components/Authenticate";
 import AuthCallback from "./components/AuthCallback";
 import Player from "./components/Player";
@@ -11,7 +11,7 @@ const App = () => {
     AppState.player) as keyof typeof AppState;
   const initialState = AppState[stateName];
 
-  const [state, _setState] = React.useState<AppState>(initialState);
+  const [state, _setState] = useState<AppState>(initialState);
 
   function setState(state: AppState) {
     _setState(state);

@@ -1,7 +1,6 @@
 import { useEffect, useContext } from "react";
 import { AppState, AppStateContext } from "../AppState";
-
-const CHROME_EXT_ID = "cnacmfaijadbkeoommccobapimcngmcl";
+import { config } from "../config";
 
 /**
  * This component renders nothing. It serves as the communication link with the Chrome extension,
@@ -12,21 +11,28 @@ export function ChromeExtensionCommLink() {
   const { state, setState } = useContext(AppStateContext);
 
   useEffect(() => {
-    if (typeof chrome !== "undefined" && chrome.runtime == null) {
+    console.log("ChromeExtensionCommLink", {
+      isChrome: typeof chrome !== "undefined",
+      hasChromeExtensionAffinity:
+        typeof chrome !== "undefined" && chrome.runtime != null,
+      state,
+      accessToken: localStorage.getItem("accessToken")
+    });
+    if (typeof chrome === "undefined" || chrome.runtime == null) {
       // the chrome extension is not installed
       return;
     }
-
-    chrome.runtime.sendMessage(CHROME_EXT_ID, {
-      hello: "goodbye " + new Date()
-    });
 
     if (state === AppState.player) {
       const accessToken = localStorage.getItem("accessToken");
       if (accessToken == null) {
         setState(AppState.auth);
       } else {
-        chrome.runtime.sendMessage(CHROME_EXT_ID, { accessToken });
+        console.log("sending access token message");
+        chrome.runtime.sendMessage(config.CHROME_EXTENSION_ID, {
+          code: "accessToken",
+          accessToken
+        });
       }
     }
   }, [setState, state]);
