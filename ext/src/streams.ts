@@ -118,14 +118,22 @@ class AudioStreamUploader {
 
 const SILENCE_CUTOFF_SECONDS = 5;
 
+interface AudioStreamUploadSessionOptions {
+  autoStopOnSilence?: boolean;
+}
+
 export class AudioStreamUploadSession {
   private readonly ctx: AudioContext;
   private readonly upload: AudioStreamUploader;
   public readonly complete: () => void;
-  private readonly doSilenceCutoffChecks = true;
+  private readonly autoStopOnSilence: boolean;
   private silenceStartAt = -1;
 
-  public static async create(stream: MediaStream) {
+  public static async create(
+    stream: MediaStream,
+    options: AudioStreamUploadSessionOptions = {}
+  ) {
+    const { autoStopOnSilence = false } = options;
     const ctx = new AudioContext();
     const src = ctx.createMediaStreamSource(stream);
     const channelCount = src.channelCount;
@@ -138,17 +146,24 @@ export class AudioStreamUploadSession {
 
     const stereo = channelCount === 2;
     const upload = await AudioStreamUploader.create({ stereo });
-    return new AudioStreamUploadSession({ src, ctx, upload });
+    return new AudioStreamUploadSession({
+      src,
+      ctx,
+      upload,
+      autoStopOnSilence
+    });
   }
 
   private constructor(params: {
     ctx: AudioContext;
     src: MediaStreamAudioSourceNode;
     upload: AudioStreamUploader;
+    autoStopOnSilence: boolean;
   }) {
-    const { ctx, src, upload } = params;
+    const { ctx, src, upload, autoStopOnSilence } = params;
     this.ctx = ctx;
     this.upload = upload;
+    this.autoStopOnSilence = autoStopOnSilence;
 
     const input = this.ctx.createGain();
     const processor = this.ctx.createScriptProcessor();
@@ -195,7 +210,7 @@ export class AudioStreamUploadSession {
       offset += asUint8a.byteLength;
     }
 
-    const proceed = this.checkSilenceCutoff({
+    const proceed = this.checkSilence({
       allChannels,
       playbackTime: ev.playbackTime
     });
@@ -209,13 +224,13 @@ export class AudioStreamUploadSession {
    * When enabled, check if no sound data for at least <SILENCE_CUTOFF_SECONDS> secs. If so, stop
    * processing.
    */
-  private checkSilenceCutoff(params: {
+  private checkSilence(params: {
     allChannels: Uint8Array;
     playbackTime: number;
   }) {
     const { allChannels, playbackTime } = params;
     let proceed = true;
-    if (this.doSilenceCutoffChecks) {
+    if (this.autoStopOnSilence) {
       const silent = allChannels.every(b => b === 0);
       if (!silent) {
         this.silenceStartAt = -1;

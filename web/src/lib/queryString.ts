@@ -8,3 +8,13 @@ export function parse() {
   }
   return obj;
 }
+
+export function encode(obj: { [key: string]: any }) {
+  let q = "";
+  for (const [k, v] of Object.entries(obj)) {
+    const sep = q.length === 0 ? "?" : "&";
+    q += sep + encodeURIComponent(k) + "=" + encodeURIComponent(v);
+  }
+
+  return q;
+}

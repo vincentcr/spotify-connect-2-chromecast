@@ -1,48 +1,88 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import * as queryString from "./lib/queryString";
+
 import Authenticate from "./components/Authenticate";
 import AuthCallback from "./components/AuthCallback";
-import Player from "./components/Player";
-import ErrorMessage from "./components/ErrorMessage";
-import { AppState, AppStateContext } from "./AppState";
-import { ChromeExtensionCommLink } from "./components/ChromeExtensionCommLink";
+import { ErrorHandler, ErrorBoundary } from "./components/ErrorHandler";
+import { AppState, AppStateContext, DefaultAppState } from "./AppState";
+import SpotifyPlayerList from "./components/SpotifyPlayerList";
+import SpotifyPlayer from "./components/SpotifyPlayer";
+import { getExtensionMessenger } from "./lib/ExtensionMessenger";
+import { getAccessToken } from "./common/fetch";
+
+const extMessenger = getExtensionMessenger();
 
 const App = () => {
-  const stateName = (window.location.hash.substr(1) ||
-    AppState.player) as keyof typeof AppState;
-  const initialState = AppState[stateName];
+  const initialState = getStateFromUrl();
+  const [state, setStateInternal] = useState<AppState>(initialState);
 
-  const [state, _setState] = useState<AppState>(initialState);
-
-  function setState(state: AppState) {
-    _setState(state);
+  function setState(state: AppState, params = {}) {
     window.location.hash = "#" + state;
-    window.location.search = "";
+    window.location.search = queryString.encode(params);
   }
 
-  const MainComponent = mainComponentFromState(state, stateName);
+  useEffect(() => {
+    window.onhashchange = () => {
+      const newState = getStateFromUrl();
+      console.log("window.onhashchange", {
+        hash: window.location.hash,
+        newState
+      });
+      setStateInternal(newState);
+    };
+  }, []);
+
+  document.title = "Spotify 2 Chromecast - " + state;
+
+  useEffect(trySendAccessTokenToExtension, [state]);
+
+  const MainComponent = mainComponentFromState(state);
+  console.log("App render", {
+    state,
+    initialState,
+    MainComponent,
+    href: window.location.href
+  });
 
   return (
     <div>
       <h2>Spotify Player</h2>
-      <AppStateContext.Provider value={{ state, setState }}>
-        <ChromeExtensionCommLink />
-        <MainComponent />
-      </AppStateContext.Provider>
+      <ErrorBoundary>
+        <AppStateContext.Provider value={{ state, setState }}>
+          <MainComponent />
+        </AppStateContext.Provider>
+      </ErrorBoundary>
     </div>
   );
 };
 
-function mainComponentFromState(state: AppState, stateName: string) {
+function trySendAccessTokenToExtension() {
+  const accessToken = getAccessToken();
+  if (accessToken != null) {
+    extMessenger.sendAccessToken(accessToken);
+  }
+}
+
+function getStateFromUrl() {
+  const hash = window.location.hash.substr(1) as keyof typeof AppState;
+  const state = AppState[hash] || DefaultAppState;
+  console.log("getStateFromUrl", { hash, state, href: window.location.href });
+  return state;
+}
+
+function mainComponentFromState(state: AppState) {
   switch (state) {
     case AppState.auth:
       return Authenticate;
     case AppState.authCallback:
       return AuthCallback;
+    case AppState.playerList:
+      return SpotifyPlayerList;
     case AppState.player:
-      return () => Player({ playerName: "Web Playback demo" });
+      return SpotifyPlayer;
     default:
-      const err = new Error(`Unknown state ${stateName}`);
-      return () => ErrorMessage({ err });
+      const err = new Error(`Unknown app state: "${state}"`);
+      return () => ErrorHandler({ error: err });
   }
 }
 

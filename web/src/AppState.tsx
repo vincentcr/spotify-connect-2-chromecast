@@ -1,10 +1,13 @@
 import { createContext } from "react";
 
 export enum AppState {
+  playerList = "playerList",
   auth = "auth",
   authCallback = "authCallback",
   player = "player"
 }
+
+export const DefaultAppState = AppState.playerList;
 
 export type SetAppState = (state: AppState) => void;
 
