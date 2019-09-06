@@ -3,10 +3,10 @@
     "target": "es6",
     "module": "commonjs",
     "moduleResolution": "node",
-    "rootDir": "src",
     "outDir": "dist/js",
     "sourceMap": true,
     "jsx": "react",
     "lib": ["esnext", "dom"]
-  }
+  },
+  "include": ["src/**/*", "../../web/common/**/*"]
 }

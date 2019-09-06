@@ -1,4 +1,5 @@
 import { AudioStreamUploadSession } from "./streams";
+import { castStream } from "../../web/src/common/cast";
 
 export function captureTab() {
   chrome.tabCapture.capture({ audio: true }, handleCapturedStream);

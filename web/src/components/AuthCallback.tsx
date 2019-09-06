@@ -2,8 +2,8 @@ import React, { useEffect, useContext, useState } from "react";
 import * as queryString from "../lib/queryString";
 
 import ErrorMessage from "./ErrorMessage";
-import { apiFetch } from "../lib/fetch";
 import { AppStateContext, SetAppState, AppState } from "../AppState";
+import { apiFetch, saveAccessToken } from "../common/fetch";
 
 type CallbackState = "Processing" | Error;
 type SetCallbackState = (state: CallbackState) => void;

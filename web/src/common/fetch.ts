@@ -1,25 +1,24 @@
-import { config } from "../config";
+import { config } from "./config";
+import { FetchError, AuthError } from "../lib/errors";
 
 export type FetchOptions = {
   headers?: Record<string, string>;
   data?: { [key: string]: any };
 } & Omit<RequestInit, "headers">;
 
-export class FetchError extends Error {
-  public readonly response: Response;
-  public constructor(message: string, response: Response) {
-    super(message);
-    this.name = "FetchError";
-    this.response = response;
-  }
-}
-
 export async function apiFetch(path: string, options: FetchOptions = {}) {
   const url = config.API_URL + path;
 
+  const { headers = {} } = options;
+  const accessToken = getAccessToken();
+  if (accessToken != null) {
+    headers.authorization = "Bearer " + accessToken;
+  }
+
   return await fetch(url, {
     ...options,
-    credentials: "include"
+    credentials: "include",
+    headers
   });
 }
 
@@ -30,22 +29,23 @@ export async function fetch(url: string, options: FetchOptions = {}) {
   }
 
   const body = formatData(data, headers["content-type"]);
-
   const allOptions = { ...otherOptions, headers, body };
-  console.log("making fetch request", url, allOptions);
-
   const resp = await window.fetch(url, allOptions);
 
-  console.log("got response", resp.status);
-
   if (!resp.ok) {
-    throw new FetchError(
+    const err = new FetchError(
       `Unexpected response status code ${
         resp.status
       } for request ${allOptions.method ||
         "GET"} ${url}. body: ${await resp.text()}`,
       resp
     );
+    if (resp.status === 401) {
+      clearAccessToken();
+      throw new AuthError(resp.statusText, err);
+    } else {
+      throw err;
+    }
   }
   return resp;
 }
@@ -69,4 +69,23 @@ function urlEncode(data: { [key: string]: any }) {
   return Object.entries(data)
     .map(([k, v]) => encodeURIComponent(k) + "=" + encodeURIComponent(v))
     .join("&");
+}
+
+let accessToken: string | null | undefined;
+export function getAccessToken() {
+  if (accessToken === undefined) {
+    accessToken = localStorage.getItem("accessToken");
+  }
+  return accessToken;
+}
+
+export function saveAccessToken(newAccessToken: string) {
+  console.log("storing access token", newAccessToken);
+  localStorage.setItem("accessToken", newAccessToken);
+  accessToken = newAccessToken;
+}
+
+function clearAccessToken() {
+  localStorage.removeItem("accessToken");
+  accessToken = null;
 }

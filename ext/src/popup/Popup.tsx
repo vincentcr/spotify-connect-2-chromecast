@@ -1,21 +1,14 @@
 import * as React from "react";
 import "./Popup.scss";
-import { MessageCode, sendMessage } from "../messages";
+import { ExtMessageCode } from "../../../web/src/common/ExtensionMessages";
 
 export default function Popup() {
-  function startTabCapture() {
-    sendMessage({ code: MessageCode.captureTab });
-  }
-
   function startStreamDemo() {
-    sendMessage({ code: MessageCode.streamDemo });
+    chrome.runtime.sendMessage({ code: ExtMessageCode.streamDemo });
   }
 
   return (
     <div className="popupContainer">
-      <div>
-        <button onClick={startTabCapture}>Start Capture</button>
-      </div>
       <div>
         <button onClick={startStreamDemo}>Start Streaming Demo</button>
       </div>

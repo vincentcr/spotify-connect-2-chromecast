@@ -1,5 +1,5 @@
-import { apiFetch } from "./fetch";
-import { config } from "./config";
+import { config } from "../../web/src/common/config";
+import { apiFetch } from "../../web/src/common/fetch";
 
 class AudioStreamWebSocket {
   private static readonly MaxReconnectAttempts = 8;

@@ -2,29 +2,45 @@
  * background "worker" script
  */
 
-import { Message, MessageCode } from "./messages";
-import { storeAccessToken } from "./fetch";
+import {
+  ExtMessage,
+  ExtMessageCode
+} from "../../web/src/common/ExtensionMessages";
 import { startStreamDemo } from "./streams";
 import { captureTab } from "./captureTab";
+import { saveAccessToken } from "../../web/src/common/fetch";
 
 // Listen to messages sent from other parts of the extension.
 chrome.runtime.onMessage.addListener(processMessage);
 // Listen to messages sent from the web site part of the app
 chrome.runtime.onMessageExternal.addListener(processMessage);
 
-function processMessage(msg: Message) {
-  console.debug("processMessage", msg);
+function processMessage(msg: ExtMessage) {
+  processMessageAsync(msg).catch(err => {
+    console.error("Failed to process message", msg, err);
+  });
+}
+
+async function processMessageAsync(msg: ExtMessage) {
+  console.debug(
+    "processMessage",
+    msg,
+    msg.code,
+    ExtMessageCode.accessToken,
+    msg.code === ExtMessageCode.accessToken
+  );
   switch (msg.code) {
-    case MessageCode.captureTab:
-      captureTab();
+    case ExtMessageCode.captureTab:
+      captureTab(msg);
       break;
-    case MessageCode.streamDemo:
+    case ExtMessageCode.streamDemo:
       startStreamDemo();
       break;
-    case MessageCode.accessToken:
-      storeAccessToken(msg.accessToken);
+    case ExtMessageCode.accessToken:
+      console.log("access token..");
+      saveAccessToken(msg.accessToken);
       break;
     default:
-      throw new Error(`Unknown message: ${msg} - ${JSON.stringify(msg)}`);
+      throw new Error(`Unknown message: ${JSON.stringify(msg)}`);
   }
 }

@@ -1,6 +1,6 @@
 import React from "react";
 
-import { config } from "../config";
+import { config } from "../common/config";
 
 const scopes =
   "streaming user-read-birthdate user-read-email user-read-private";
