@@ -26,7 +26,7 @@ export class Auth {
   public async processSpotifyOauthCallback(code: string) {
     const token = await this.spotify.createToken(code);
     const user = await this.spotify.me(token.accessToken);
-    return await this.authStore.create({ user, token });
+    return await this.authStore.create({ ...user, ...token });
   }
 
   public async get(id: string) {
@@ -39,19 +39,19 @@ export class Auth {
 
   private async ensureAccessTokenUpToDate(authRec: AuthRecord) {
     const secondsRemaining = dateFns.differenceInSeconds(
-      authRec.token.expiresAt,
+      authRec.spotify.accessTokenExpiresAt,
       new Date()
     );
 
     if (secondsRemaining < 60) {
       logger.info("refreshing access token", {
         secondsRemaining,
-        expiresAt: authRec.token.expiresAt
+        expiresAt: authRec.spotify.accessTokenExpiresAt
       });
       const { accessToken, expiresIn } = await this.spotify.refreshToken(
-        authRec.token.refreshToken
+        authRec.spotify.refreshToken
       );
-      await this.authStore.updateAccessToken(authRec, {
+      await this.authStore.updateSpotifyAccessToken(authRec, {
         accessToken,
         expiresIn
       });

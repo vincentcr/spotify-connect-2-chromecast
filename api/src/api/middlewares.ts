@@ -11,18 +11,26 @@ import { Auth } from "../domain/auth/auth";
 
 const logger = getLogger("middlewares");
 
+enum AuthSource {
+  cookie,
+  authorizationHeader
+}
+
 export function authenticate(auth: Auth): IMiddleware {
   return async function authenticate(
     ctx: Router.IRouterContext,
     next: () => Promise<any>
   ) {
-    const id = findRequestAuthToken(ctx);
-    if (id == null) {
+    const result = findRequestAuthToken(ctx);
+    if (result == null) {
       return next();
     }
 
-    const authRec = await auth.get(id);
+    const authRec = await auth.get(result.value);
     if (authRec == null) {
+      if (result.source === AuthSource.cookie) {
+        ctx.cookies.set("token", undefined);
+      }
       ctx.status = 401;
       throw new VError(
         { name: "InvalidCredentialsError", info: { httpStatusCode: 401 } },
@@ -40,28 +48,33 @@ export async function authenticateRequest(
   req: http.IncomingMessage
 ): Promise<AuthRecord | undefined> {
   const cookies = Cookies(req, {} as http.ServerResponse);
-  const tokenId = findRequestAuthToken({ headers: req.headers, cookies });
-  if (tokenId == null) {
+  const result = findRequestAuthToken({ headers: req.headers, cookies });
+  if (result == null) {
     return undefined;
   }
-  return await auth.get(tokenId);
+  return await auth.get(result.value);
+}
+
+interface TokenSearchResult {
+  source: AuthSource;
+  value: string;
 }
 
 function findRequestAuthToken(ctx: {
   headers: any;
   cookies: Cookies;
-}): string | undefined {
+}): TokenSearchResult | undefined {
   if (typeof ctx.headers.authorization === "string") {
     const match = /^Bearer (.+)$/.exec(ctx.headers.authorization);
     if (match != null) {
-      return match[1];
+      return { source: AuthSource.authorizationHeader, value: match[1] };
     }
   }
 
   const tok = ctx.cookies.get("token");
 
   if (typeof tok === "string") {
-    return tok;
+    return { source: AuthSource.cookie, value: tok };
   }
 }
 

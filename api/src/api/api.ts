@@ -95,7 +95,7 @@ function initAuthRoutes(services: Services) {
     const { code } = ctx.request.body;
     const authRec = await auth.processSpotifyOauthCallback(code);
 
-    ctx.cookies.set("token", authRec.id, {
+    ctx.cookies.set("token", authRec.accessToken, {
       expires: dateFns.addYears(new Date(), 100)
     });
     ctx.body = authView(authRec);
@@ -106,25 +106,20 @@ function initAuthRoutes(services: Services) {
     ctx.body = authView(authRec);
   });
 
-  router.get("/accessToken", authorize, async ctx => {
-    const authRec: AuthRecord = ctx.state.auth;
-    ctx.body = tokenView(authRec);
-  });
-
   return router;
 }
 
 function authView(rec: AuthRecord) {
-  return { id: rec.id, user: userView(rec), token: tokenView(rec) };
+  return { accessToken: rec.accessToken, spotify: authSpotifyView(rec) };
 }
 
-function userView(rec: AuthRecord) {
-  return rec.user;
-}
-function tokenView(rec: AuthRecord) {
+function authSpotifyView(rec: AuthRecord) {
   return {
-    accessToken: rec.token.accessToken,
-    expiresAt: rec.token.expiresAt
+    email: rec.spotify.email,
+    displayName: rec.spotify.displayName,
+    images: rec.spotify.images,
+    accessToken: rec.spotify.accessToken,
+    accessTokenExpiresAt: rec.spotify.accessTokenExpiresAt
   };
 }
 

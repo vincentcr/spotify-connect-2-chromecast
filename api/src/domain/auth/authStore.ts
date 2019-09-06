@@ -2,7 +2,7 @@ import * as uuid from "uuid/v4";
 import * as dateFns from "date-fns";
 import { AsyncRedisClient } from "../../lib/redis";
 
-interface UserRecord {
+interface SpotifyAuthRecord {
   readonly id: string;
   readonly uri: string;
   readonly displayName?: string;
@@ -14,24 +14,21 @@ interface UserRecord {
       width: number | null;
     }
   ];
-}
-
-interface TokenRecord {
-  accessToken: string;
-  expiresAt: Date;
-  readonly scope: string;
   readonly refreshToken: string;
+  accessToken: string;
+  accessTokenExpiresAt: Date;
 }
 
-interface CreateAuthRecordParams {
-  user: UserRecord;
-  token: Omit<TokenRecord, "expiresAt"> & { expiresIn: number };
-}
+type CreateAuthRecordParams = Omit<
+  SpotifyAuthRecord,
+  "accessTokenExpiresAt"
+> & {
+  expiresIn: number;
+};
 
 export interface AuthRecord {
-  id: string;
-  token: TokenRecord;
-  user: UserRecord;
+  accessToken: string;
+  spotify: SpotifyAuthRecord;
 }
 
 export class AuthStore {
@@ -41,22 +38,18 @@ export class AuthStore {
   }
 
   public async create(params: CreateAuthRecordParams): Promise<AuthRecord> {
-    const id = uuid();
-    const { user, token } = params;
+    const accessToken = uuid();
     const auth = {
-      id,
-      user: {
-        displayName: user.displayName,
-        id: user.id,
-        email: user.email,
-        images: user.images,
-        uri: user.uri
-      },
-      token: {
-        accessToken: token.accessToken,
-        expiresAt: this.expiresInToDate(token.expiresIn),
-        refreshToken: token.refreshToken,
-        scope: token.scope
+      accessToken,
+      spotify: {
+        displayName: params.displayName,
+        id: params.id,
+        email: params.email,
+        images: params.images,
+        uri: params.uri,
+        accessToken: params.accessToken,
+        accessTokenExpiresAt: this.expiresInToDate(params.expiresIn),
+        refreshToken: params.refreshToken
       }
     };
     await this.save(auth);
@@ -65,10 +58,13 @@ export class AuthStore {
   }
 
   private async save(record: AuthRecord) {
-    await this.redis.set(this.mkKey(record.id), JSON.stringify(record));
+    await this.redis.set(
+      this.mkKey(record.accessToken),
+      JSON.stringify(record)
+    );
   }
 
-  public async updateAccessToken(
+  public async updateSpotifyAccessToken(
     auth: AuthRecord,
     params: {
       accessToken: string;
@@ -76,8 +72,8 @@ export class AuthStore {
     }
   ) {
     const { accessToken, expiresIn } = params;
-    auth.token.accessToken = accessToken;
-    auth.token.expiresAt = this.expiresInToDate(expiresIn);
+    auth.spotify.accessToken = accessToken;
+    auth.spotify.accessTokenExpiresAt = this.expiresInToDate(expiresIn);
     await this.save(auth);
   }
 
